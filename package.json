@@ -1,0 +1,16 @@
+{
+  "name": "lucaswarwick02.arcadian-assets",
+  "version": "1.0.0",
+  "displayName": "Arcadian Assets",
+  "description": "Collection of useful files we reuse across games.",
+  "unity": "2022.3",
+  "unityRelease": "6f1",
+  "documentationUrl": "",
+  "changelogUrl": "",
+  "licensesUrl": "",
+  "keywords": [],
+  "author": {
+    "name": "Lucas Warwick",
+    "email": "lucaswarwick02@gmail.com"
+  }
+}
