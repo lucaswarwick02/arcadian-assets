@@ -14,9 +14,15 @@ namespace Arcadian.UI
         private const float AnimationLength = 0.125f;
 
         private Coroutine _animation;
+
+        private bool IsOpen => gameObject.activeSelf;
+
+        private bool IsClosed => !gameObject.activeSelf;
     
         public void Open()
         {
+            if (IsOpen) return;
+            
             gameObject.SetActive(true);
             if (openSound) openSound.Play();
             _animation = StartCoroutine(OpenAnimation());
@@ -41,6 +47,8 @@ namespace Arcadian.UI
     
         public void Close()
         {
+            if (IsClosed) return;
+            
             if (closeSound) closeSound.Play();
             if (_animation != null) StopCoroutine(_animation);
             transform.localScale = Vector3.one;
