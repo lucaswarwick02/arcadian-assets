@@ -4,22 +4,23 @@ using UnityEngine;
 
 namespace Arcadian.UI
 {
-    public class AbstractUI : MonoBehaviour
+    public abstract class AbstractUI : MonoBehaviour
     {
         [Header("Abstract UI")]
         [SerializeField] private SoundEffect openSound;
         [SerializeField] private SoundEffect closeSound;
+        [Space]
 
         private const float SizeMultiplier = 1.075f;
         private const float AnimationLength = 0.125f;
 
         private Coroutine _animation;
 
-        private bool IsOpen => gameObject.activeSelf;
+        public bool IsOpen => gameObject.activeSelf;
 
-        private bool IsClosed => !gameObject.activeSelf;
+        public bool IsClosed => !gameObject.activeSelf;
     
-        public void Open()
+        public virtual void Open()
         {
             if (IsOpen) return;
             
@@ -45,7 +46,7 @@ namespace Arcadian.UI
             transform.localScale = Vector3.one;
         }
     
-        public void Close()
+        public virtual void Close()
         {
             if (IsClosed) return;
             

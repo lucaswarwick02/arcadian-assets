@@ -1,3 +1,4 @@
 {
-	"name": "Arcadian.Editor"
+	"name": "Arcadian.Editor",
+	"references":[ "GUID:5dbe19ea2aba2ee468d7756ca8c93599" ]
 }
