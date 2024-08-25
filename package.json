@@ -12,5 +12,9 @@
   "author": {
     "name": "Lucas Warwick",
     "email": "lucaswarwick02@gmail.com"
+  },
+  "dependencies": {
+    "com.unity.textmeshpro": "3.0.6",
+    "com.unity.addressables": "1.21.21"
   }
 }
