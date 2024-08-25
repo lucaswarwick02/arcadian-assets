@@ -15,6 +15,7 @@ namespace Arcadian.UI
             Color? color = null,
             Transform parent = null,
             Camera camera = null,
+            float startOffset = 0f,
             float maxOffset = 1f,
             float maxRotation = 10f,
             float fadeTime = 0.25f,
@@ -33,6 +34,8 @@ namespace Arcadian.UI
             // Calculate position + rotation
             var position = camera!.WorldToScreenPoint(worldPos);
             var rotation = Quaternion.Euler(0, 0, Random.Range(-maxRotation, maxRotation));
+
+            var origin = worldPos + Vector3.one * startOffset;
             
             Addressables.InstantiateAsync(
                         ArcadianAssetsConfig.FloatingTextPath,
@@ -48,7 +51,7 @@ namespace Arcadian.UI
 
                     if (color.HasValue) floatingText.color = color.Value;
 
-                    floatingText.StartCoroutine(Example(camera, floatingText, worldPos, maxOffset, fadeTime, stayTime));
+                    floatingText.StartCoroutine(Example(camera, floatingText, origin, maxOffset, fadeTime, stayTime));
                 };
         }
 
