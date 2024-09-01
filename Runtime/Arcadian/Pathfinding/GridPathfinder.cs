@@ -87,6 +87,46 @@ namespace Arcadian.Pathfinding
 
             return null;
         }
+        
+        public Node GetClosestValidNode(Vector3 worldPosition)
+        {
+            Node closestNode = NodeFromWorldPoint(worldPosition);
+    
+            // If the closest node is already walkable, return it
+            if (closestNode.Walkable)
+                return closestNode;
+
+            // If not, search for the nearest walkable node
+            var openSet = new List<Node> { closestNode };
+            var closedSet = new HashSet<Node>();
+
+            while (openSet.Count > 0)
+            {
+                var currentNode = openSet[0];
+                openSet.RemoveAt(0);
+                closedSet.Add(currentNode);
+
+                if (currentNode.Walkable)
+                    return currentNode;
+
+                foreach (var neighbor in Neighbors(currentNode))
+                {
+                    if (closedSet.Contains(neighbor))
+                        continue;
+
+                    if (!openSet.Contains(neighbor))
+                        openSet.Add(neighbor);
+                }
+
+                // Sort the open set by distance from the original position
+                openSet.Sort((a, b) => 
+                    Vector3.Distance(a.WorldPosition, worldPosition).CompareTo(
+                        Vector3.Distance(b.WorldPosition, worldPosition)));
+            }
+
+            // If no walkable node is found, return null or handle the case as needed
+            return null;
+        }
 
         private static List<Node> RetracePath(Node startNode, Node endNode)
         {
@@ -127,7 +167,7 @@ namespace Arcadian.Pathfinding
             return neighbors;
         }
 
-        private Node NodeFromWorldPoint(Vector3 worldPosition)
+        public Node NodeFromWorldPoint(Vector3 worldPosition)
         {
             var localPosition = worldPosition - _gridOrigin;
             var x = Mathf.Clamp(Mathf.RoundToInt(localPosition.x / nodeSize), 0, gridSize.x - 1);

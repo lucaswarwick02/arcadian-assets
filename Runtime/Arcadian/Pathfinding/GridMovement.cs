@@ -1,79 +1,53 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Arcadian.Pathfinding
 {
+    [ExecuteAlways]
     public class GridMovement : MonoBehaviour
     {
-        [SerializeField] private bool canMove = true;
+        public event Action TargetReached;
+        public float speed = 2;
         
-        [Header("Required Components")]
-        [SerializeField] private GridPathfinder gridPathfinder;
+        public bool IsMoving { private set; get; }
+        public Vector2 Velocity { private set; get; }
+        public Vector2 LastVelocity { private set; get; }
+
+        public void SetPath(IEnumerable<Node> path)
+        {
+            StartCoroutine(Move(path));
+        }
         
-        [Header("Movement Settings")]
-        [SerializeField] private Vector3 targetPosition;
-        [SerializeField] private float moveSpeed = 5f;
-        [SerializeField] private float pathUpdateInterval = 0.5f;
-        [SerializeField] private float reachDistance = 0.1f;
-
-        private readonly List<Vector3> _pathPositions = new();
-
-        private List<Node> _path;
-        private int _currentWaypointIndex;
-
-        private void Start()
+        private IEnumerator Move(IEnumerable<Node> path)
         {
-            StartCoroutine(UpdatePathRoutine());
-        }
-
-        private void Update()
-        {
-            if (!canMove || _path == null || _currentWaypointIndex >= _path.Count) return;
+            IsMoving = true;
             
-            var targetPosLocal = _path[_currentWaypointIndex].WorldPosition;
-            var position = transform.position;
-            targetPosLocal.z = position.z; // Keep Z-position constant for 2D
-
-            position = Vector3.MoveTowards(position, targetPosLocal, moveSpeed * Time.deltaTime);
-            transform.position = position;
-
-            if (Vector3.Distance(transform.position, targetPosLocal) < reachDistance)
+            foreach (var node in path)
             {
-                _currentWaypointIndex++;
+                yield return MoveToNode(node);
             }
+
+            IsMoving = false;
+            Velocity = Vector2.zero;
+            
+            TargetReached?.Invoke();
         }
 
-        public void SetTarget(Vector3 newTarget)
+        private IEnumerator MoveToNode(Node node)
         {
-            targetPosition = newTarget;
-            UpdatePath();
-        }
+            Velocity = (node.WorldPosition - transform.position).normalized;
+            LastVelocity = Velocity;
 
-        private void UpdatePath()
-        {
-            if (!gridPathfinder) return;
-            
-            _path = gridPathfinder.FindPath(transform.position, targetPosition);
-            _currentWaypointIndex = 0;
-            
-            _pathPositions.Clear();
-            if (_path == null) return;
-            
-            foreach (var node in _path)
+            while (Vector3.Magnitude(transform.position - node.WorldPosition) > 0.0125f)
             {
-                _pathPositions.Add(node.WorldPosition);
-            }
-        }
+                transform.position += new Vector3(Velocity.x, Velocity.y, 0) * (speed * Time.deltaTime);
 
-        private IEnumerator UpdatePathRoutine()
-        {
-            while (true)
-            {
-                UpdatePath();
-                yield return new WaitForSeconds(pathUpdateInterval);
+                yield return null;
             }
-            // ReSharper disable once IteratorNeverReturns
+
+            transform.position = node.WorldPosition;
         }
     }
 }

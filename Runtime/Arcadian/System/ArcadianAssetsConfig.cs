@@ -6,8 +6,14 @@ namespace Arcadian.System
     {
         public static string FloatingTextPath
         {
-            get => EditorPrefs.GetString("PackageConfig_FloatingTextPath", "");
-            set => EditorPrefs.SetString("PackageConfig_FloatingTextPath", value);
+            get => EditorPrefs.GetString("ArcadianAssets_FloatingTextPath", "");
+            set => EditorPrefs.SetString("ArcadianAssets_FloatingTextPath", value);
+        }
+
+        public static string TransitionEffectPath
+        {
+            get => EditorPrefs.GetString("ArcadianAssets_TransitionEffectPath", "");
+            set => EditorPrefs.SetString("ArcadianAssets_TransitionEffectPath", value);
         }
     }
 }

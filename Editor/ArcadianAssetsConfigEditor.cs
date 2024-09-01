@@ -17,13 +17,13 @@ namespace Editor
         {
             EditorGUI.BeginChangeCheck();
 
-            var newPrefabPath = EditorGUILayout.TextField("Floating Text Path", ArcadianAssetsConfig.FloatingTextPath);
-            // Add fields for other configuration variables
+            var newFloatingTextPath = EditorGUILayout.TextField("Floating Text Path", ArcadianAssetsConfig.FloatingTextPath);
+            var newTransitionEffectPath = EditorGUILayout.TextField("Transition Effect Path", ArcadianAssetsConfig.TransitionEffectPath);
 
             if (EditorGUI.EndChangeCheck())
             {
-                ArcadianAssetsConfig.FloatingTextPath = newPrefabPath;
-                // Set other configuration values
+                ArcadianAssetsConfig.FloatingTextPath = newFloatingTextPath;
+                ArcadianAssetsConfig.TransitionEffectPath = newTransitionEffectPath;
             }
         }
     }
