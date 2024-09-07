@@ -7,6 +7,8 @@ namespace Arcadian.Pathfinding
     {
         public Vector2Int gridSize = new(10, 10);
         public float nodeSize = 1f;
+        [Range(0f, 1f)]
+        public float randomnessFactor = 0.1f;
         
         private Node[,] _grid;
         private Vector3 _gridOrigin;
@@ -73,11 +75,11 @@ namespace Arcadian.Pathfinding
                         continue;
                     }
 
-                    var newMovementCostToNeighbor = currentNode.GCost + Distance(currentNode, neighbor);
+                    var newMovementCostToNeighbor = currentNode.GCost + RandomizedDistance(currentNode, neighbor);
                     if (newMovementCostToNeighbor >= neighbor.GCost && openSet.Contains(neighbor)) continue;
                     
                     neighbor.GCost = newMovementCostToNeighbor;
-                    neighbor.HCost = Distance(neighbor, targetNode);
+                    neighbor.HCost = RandomizedDistance(neighbor, targetNode);
                     neighbor.Parent = currentNode;
 
                     if (!openSet.Contains(neighbor))
@@ -92,11 +94,9 @@ namespace Arcadian.Pathfinding
         {
             Node closestNode = NodeFromWorldPoint(worldPosition);
     
-            // If the closest node is already walkable, return it
             if (closestNode.Walkable)
                 return closestNode;
 
-            // If not, search for the nearest walkable node
             var openSet = new List<Node> { closestNode };
             var closedSet = new HashSet<Node>();
 
@@ -118,13 +118,11 @@ namespace Arcadian.Pathfinding
                         openSet.Add(neighbor);
                 }
 
-                // Sort the open set by distance from the original position
                 openSet.Sort((a, b) => 
                     Vector3.Distance(a.WorldPosition, worldPosition).CompareTo(
                         Vector3.Distance(b.WorldPosition, worldPosition)));
             }
 
-            // If no walkable node is found, return null or handle the case as needed
             return null;
         }
 
@@ -180,6 +178,13 @@ namespace Arcadian.Pathfinding
             var dstX = Mathf.Abs(nodeA.GridX - nodeB.GridX);
             var dstY = Mathf.Abs(nodeA.GridY - nodeB.GridY);
             return dstX + dstY;
+        }
+
+        private int RandomizedDistance(Node nodeA, Node nodeB)
+        {
+            var baseDistance = Distance(nodeA, nodeB);
+            var randomFactor = Random.Range(-randomnessFactor, randomnessFactor);
+            return Mathf.RoundToInt(baseDistance * (1 + randomFactor));
         }
 
         private void OnDrawGizmos()

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Arcadian.Extensions
 {
@@ -24,7 +25,25 @@ namespace Arcadian.Extensions
 
         public static T Random<T>(this T[] choices)
         {
-            return choices[UnityEngine.Random.Range(0, choices.Length)];
+            return Random(choices, _ => 1);
+        }
+
+        public static T Random<T>(this T[] items, Func<T, float> weight)
+        {
+            var totalWeight = items.Sum(weight);
+            var randomNumber = UnityEngine.Random.Range(0f, totalWeight);
+
+            foreach (var item in items)
+            {
+                if (randomNumber < weight(item))
+                {
+                    return item;
+                }
+
+                randomNumber -= weight(item);
+            }
+
+            return items.Last();
         }
     }
 }
