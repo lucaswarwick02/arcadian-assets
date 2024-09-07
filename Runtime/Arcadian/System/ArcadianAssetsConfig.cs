@@ -1,19 +1,11 @@
-﻿using UnityEditor;
+﻿using UnityEngine;
 
 namespace Arcadian.System
 {
-    public static class ArcadianAssetsConfig
+    [CreateAssetMenu(fileName = "ArcadianAssetsConfig", menuName = "Arcadian/Assets Config")]
+    public class ArcadianAssetsConfig : ScriptableObject
     {
-        public static string FloatingTextPath
-        {
-            get => EditorPrefs.GetString("ArcadianAssets_FloatingTextPath", "");
-            set => EditorPrefs.SetString("ArcadianAssets_FloatingTextPath", value);
-        }
-
-        public static string TransitionEffectPath
-        {
-            get => EditorPrefs.GetString("ArcadianAssets_TransitionEffectPath", "");
-            set => EditorPrefs.SetString("ArcadianAssets_TransitionEffectPath", value);
-        }
+        [field: SerializeField] public string FloatingTextPath { private set; get; }
+        [field: SerializeField] public string TransitionEffectPath { private set; get; }
     }
 }

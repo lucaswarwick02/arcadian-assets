@@ -21,9 +21,9 @@ namespace Arcadian.UI
             float fadeTime = 0.25f,
             float stayTime = 0.5f)
         {
-            if (string.IsNullOrWhiteSpace(ArcadianAssetsConfig.FloatingTextPath))
+            if (string.IsNullOrWhiteSpace(ArcadianAssets.Config.FloatingTextPath))
             {
-                Debug.LogError("You must set ArcadianAssetsConfig.FloatingTextPath in order to use FloatingText.Create()");
+                Debug.LogError("You must set ArcadianAssets.Config.FloatingTextPath in order to use FloatingText.Create()");
                 return;
             }
 
@@ -38,7 +38,7 @@ namespace Arcadian.UI
             var origin = worldPos + Vector3.one * startOffset;
             
             Addressables.InstantiateAsync(
-                        ArcadianAssetsConfig.FloatingTextPath,
+                        ArcadianAssets.Config.FloatingTextPath,
                         position,
                         rotation,
                         parent)

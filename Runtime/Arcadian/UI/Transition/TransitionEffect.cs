@@ -18,13 +18,13 @@ namespace Arcadian.UI.Transition
         
         public static void ChangeScene(string sceneName, string header, string body)
         {
-            if (string.IsNullOrWhiteSpace(ArcadianAssetsConfig.TransitionEffectPath))
+            if (string.IsNullOrWhiteSpace(ArcadianAssets.Config.TransitionEffectPath))
             {
                 Debug.LogError("You must set ArcadianAssetsConfig.TransitionEffectPath in order to use TransitionEffect.ChangeScene()");
                 return;
             }
             
-            Addressables.InstantiateAsync(ArcadianAssetsConfig.TransitionEffectPath, Position, Quaternion.identity).Completed +=
+            Addressables.InstantiateAsync(ArcadianAssets.Config.TransitionEffectPath, Position, Quaternion.identity).Completed +=
                 handle =>
                 {
                     var transitionEffect = handle.Result.GetComponent<TransitionEffect>();

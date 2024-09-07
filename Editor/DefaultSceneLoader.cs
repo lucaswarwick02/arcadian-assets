@@ -20,7 +20,7 @@ namespace Editor
             }
         }
 
-        [MenuItem("Arcadian Assets/Toggle Default Scene Loader")]
+        [MenuItem("Arcadian Assets/Toggle Default Scene Loader %#d", false, 1)]
         private static void ToggleDefaultSceneLoader()
         {
             var isEnabled = EditorPrefs.GetBool(ToggleKey, true);
@@ -37,6 +37,8 @@ namespace Editor
                 EditorApplication.playModeStateChanged -= LoadDefaultScene;
                 Debug.Log("Default Scene Loader disabled");
             }
+            
+            Menu.SetChecked("Arcadian Assets/Toggle Default Scene Loader", isEnabled);
         }
 
         [MenuItem("Tools/Toggle Default Scene Loader", true)]
