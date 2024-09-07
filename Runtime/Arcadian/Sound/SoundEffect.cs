@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Arcadian.System;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
 
 namespace Arcadian.Sound
@@ -6,22 +8,29 @@ namespace Arcadian.Sound
     [CreateAssetMenu(menuName = "Misc/Sound Effect", fileName = "New Sound Effect")]
     public class SoundEffect : ScriptableObject
     {
-        [field: SerializeField] public SoundEffectInstance Prefab { set; get; }
         [field: SerializeField] public AudioClip Clip { private set; get; }
         [field: SerializeField] public AudioMixerGroup MixerGroup { private set; get; }
 
         public void Play(float? clipLength = null)
         {
-            // Instantiate the standalone object
-            var audioSource = Instantiate(Prefab);
+            Addressables.InstantiateAsync(
+                        ArcadianAssets.Config.SoundEffectInstancePath,
+                        Vector3.zero,
+                        Quaternion.identity)
+                    .Completed +=
+                handle =>
+                {
+                    // Get the instance
+                    var soundEffectInstance = handle.Result.GetComponent<SoundEffectInstance>();
 
-            // Attach the Variables
-            audioSource.SetClip(Clip);
-            audioSource.SetMixerGroup(MixerGroup);
-            if (clipLength != null) audioSource.SetClipLength(clipLength.Value);
+                    // Attach the Variables
+                    soundEffectInstance.SetClip(Clip);
+                    soundEffectInstance.SetMixerGroup(MixerGroup);
+                    if (clipLength != null) soundEffectInstance.SetClipLength(clipLength.Value);
 
-            // Play
-            audioSource.Play();
+                    // Play
+                    soundEffectInstance.Play();
+                };
         }
     }
 }

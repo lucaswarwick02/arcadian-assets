@@ -7,5 +7,6 @@ namespace Arcadian.System
     {
         [field: SerializeField] public string FloatingTextPath { private set; get; }
         [field: SerializeField] public string TransitionEffectPath { private set; get; }
+        [field: SerializeField] public string SoundEffectInstancePath { private set; get; }
     }
 }
