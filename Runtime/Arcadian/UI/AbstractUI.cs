@@ -1,4 +1,5 @@
 using System.Collections;
+using Arcadian.Extensions;
 using Arcadian.Sound;
 using UnityEngine;
 
@@ -27,6 +28,8 @@ namespace Arcadian.UI
             gameObject.SetActive(true);
             if (openSound) openSound.Play();
             _animation = StartCoroutine(OpenAnimation());
+            
+            this.RunEndOnFrame(AfterOpen);
         }
 
         private IEnumerator OpenAnimation()
@@ -54,6 +57,11 @@ namespace Arcadian.UI
             if (_animation != null) StopCoroutine(_animation);
             transform.localScale = Vector3.one;
             gameObject.SetActive(false);
+        }
+
+        public virtual void AfterOpen()
+        {
+            
         }
     }
 }
