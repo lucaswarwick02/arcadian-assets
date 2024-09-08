@@ -38,7 +38,7 @@ namespace Arcadian.UI
 
             while (timer < AnimationLength)
             {
-                timer += Time.deltaTime;
+                timer += Time.unscaledDeltaTime;
                 
                 var percentage = Mathf.Sin(timer / AnimationLength * Mathf.PI);
                 transform.localScale = Vector3.one * Mathf.Lerp(1f, SizeMultiplier, percentage);
