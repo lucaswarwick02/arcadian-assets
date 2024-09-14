@@ -24,6 +24,14 @@
             Value = value;
         }
 
+        public void Set(int value)
+        {
+            Value = value;
+
+            if (Value < 0) Value = 0;
+            if (Value > MaxValue) Value = MaxValue;
+        }
+
         public void Increment()
         {
             Value++;
