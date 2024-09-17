@@ -28,7 +28,7 @@ namespace Arcadian.Sound
                     soundEffectInstance.SetMixerGroup(MixerGroup);
                 
                     if (clipLength != null) soundEffectInstance.SetClipLength(clipLength.Value);
-                    if (offsetPitch) soundEffectInstance.OffsetPitch()
+                    if (offsetPitch) soundEffectInstance.OffsetPitch();
 
                     // Play
                     soundEffectInstance.Play();

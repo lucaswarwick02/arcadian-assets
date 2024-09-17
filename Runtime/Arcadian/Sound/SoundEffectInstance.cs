@@ -31,7 +31,7 @@ namespace Arcadian.Sound
 
         public void OffsetPitch()
         {
-            _audioSource.pitch += Random.Range(-0.1f, 0.1f)
+            _audioSource.pitch += Random.Range(-0.1f, 0.1f);
         }
 
         public void Play()
