@@ -11,7 +11,7 @@ namespace Arcadian.Sound
         [field: SerializeField] public AudioClip Clip { private set; get; }
         [field: SerializeField] public AudioMixerGroup MixerGroup { private set; get; }
 
-        public void Play(float? clipLength = null)
+        public void Play(float? clipLength = null, bool offsetPitch = false)
         {
             Addressables.InstantiateAsync(
                         ArcadianAssets.Config.SoundEffectInstancePath,
@@ -26,7 +26,9 @@ namespace Arcadian.Sound
                     // Attach the Variables
                     soundEffectInstance.SetClip(Clip);
                     soundEffectInstance.SetMixerGroup(MixerGroup);
+                
                     if (clipLength != null) soundEffectInstance.SetClipLength(clipLength.Value);
+                    if (offsetPitch) soundEffectInstance.OffsetPitch()
 
                     // Play
                     soundEffectInstance.Play();
