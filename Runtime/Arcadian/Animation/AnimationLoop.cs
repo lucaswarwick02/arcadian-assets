@@ -22,6 +22,8 @@ namespace Arcadian.Animation
 
         public event Action onAnimationFinished;
 
+        private Coroutine _play;
+
         private void Awake()
         {
             if (playOnStart) SetSprite(sprites[0]);
@@ -38,7 +40,9 @@ namespace Arcadian.Animation
         [ContextMenu("Play")]
         public void Play()
         {
-            StartCoroutine(PlayCoroutine());
+            if (_play != null) StopCoroutine(_play);
+
+            _play = StartCoroutine(PlayCoroutine());
         }
 
         private IEnumerator PlayCoroutine()
