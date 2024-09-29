@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,23 +10,33 @@ namespace Arcadian.UI
     {
         [SerializeField] private LayoutGroup layoutGroup;
         [SerializeField] private RectTransform viewport;
-        [SerializeField] private RectTransform content;
+        [SerializeField] private ScrollNavigationContent scrollNavigationContent;
 
         private const float AutoScrollSpeed = 10f;
 
         private Coroutine _autoScroll;
+        
+        private RectTransform Content => scrollNavigationContent.transform as RectTransform;
+
+        private void Awake()
+        {
+            if (!scrollNavigationContent)
+            {
+                Debug.LogError("You must also attach and set the ScrollNavigationContent script to the main content of the ScrollRect.");
+            }
+        }
 
         private IEnumerator AutoScroll(Vector3 targetLocalPos)
         {
-            while (Vector3.Distance(content.localPosition, targetLocalPos) > 0.1f)
+            while (Vector3.Distance(Content.localPosition, targetLocalPos) > 0.1f)
             {
-                content.localPosition =
-                    Vector3.Lerp(content.localPosition, targetLocalPos, Time.unscaledDeltaTime * AutoScrollSpeed);
+                Content.localPosition =
+                    Vector3.Lerp(Content.localPosition, targetLocalPos, Time.unscaledDeltaTime * AutoScrollSpeed);
                 
                 yield return null;
             }
 
-            content.localPosition = targetLocalPos;
+            Content.localPosition = targetLocalPos;
             _autoScroll = null;
         }
 
@@ -47,13 +58,13 @@ namespace Arcadian.UI
             var topView = 0;
             var bottomView = topView - viewport.rect.height;
 
-            var offset = topView - content.localPosition.y;
+            var offset = topView - Content.localPosition.y;
 
             // Below rect
             if (bottomObj - offset < bottomView)
             {
                 var diff = -(bottomObj - offset - bottomView);
-                var contentLocalPos = content.localPosition;
+                var contentLocalPos = Content.localPosition;
                 contentLocalPos.y += diff;
                 
                 if (_autoScroll != null) StopCoroutine(_autoScroll);
@@ -65,7 +76,7 @@ namespace Arcadian.UI
             {
                 var diff = -(topObj - offset - topView);
                 
-                var contentLocalPos = content.localPosition;
+                var contentLocalPos = Content.localPosition;
                 contentLocalPos.y += diff;
                 
                 if (_autoScroll != null) StopCoroutine(_autoScroll);
