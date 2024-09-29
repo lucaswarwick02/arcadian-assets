@@ -24,13 +24,13 @@ namespace Arcadian.UI
                     eventTrigger = child.gameObject.AddComponent<EventTrigger>();
                 }
 
-                // Check if OnSubmit event already exists
-                var onSubmitExists = eventTrigger.triggers.Any(t => t.eventID == EventTriggerType.Submit);
+                // Check if OnSelect event already exists
+                var onSelectExists = eventTrigger.triggers.Any(t => t.eventID == EventTriggerType.Select);
 
-                if (onSubmitExists) continue;
+                if (onSelectExists) continue;
                 var entry = new EventTrigger.Entry
                 {
-                    eventID = EventTriggerType.Submit
+                    eventID = EventTriggerType.Select
                 };
                 entry.callback.AddListener((_) => { scrollNavigation.Select(child.gameObject); });
                 eventTrigger.triggers.Add(entry);
