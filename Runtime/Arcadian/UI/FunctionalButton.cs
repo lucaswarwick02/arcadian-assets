@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using JetBrains.Annotations;
+using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace Arcadian.UI
@@ -8,7 +9,7 @@ namespace Arcadian.UI
         public abstract void OnButtonHover();
         public abstract void OnButtonHoverEnd();
 
-        public abstract void OnButtonPress();
+        public abstract void OnButtonPress([CanBeNull] PointerEventData eventData = null);
         
         /// <summary>
         /// Use this callback to detect pointer enter events
@@ -44,7 +45,7 @@ namespace Arcadian.UI
         /// </summary>
         public void OnPointerClick(PointerEventData eventData)
         {
-            OnButtonPress();
+            OnButtonPress(eventData);
         }
 
         public void OnSubmit(BaseEventData eventData)
