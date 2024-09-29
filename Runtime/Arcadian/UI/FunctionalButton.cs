@@ -10,12 +10,21 @@ namespace Arcadian.UI
         public abstract void OnButtonHoverEnd();
 
         public abstract void OnButtonPress([CanBeNull] PointerEventData eventData = null);
+
+        public bool IsFocused { private set; get;}
         
         /// <summary>
         /// Use this callback to detect pointer enter events
         /// </summary>
         public void OnPointerEnter(PointerEventData eventData)
         {
+            IsFocused = true;
+            OnButtonHover();
+        }
+
+        public void OnSelect(BaseEventData eventData)
+        {
+            IsFocused = true;
             OnButtonHover();
         }
 
@@ -24,12 +33,8 @@ namespace Arcadian.UI
         /// </summary>
         public void OnPointerExit(PointerEventData eventData)
         {
+            IsFocused = false;
             OnButtonHoverEnd();
-        }
-
-        public void OnSelect(BaseEventData eventData)
-        {
-            OnButtonHover();
         }
 
         /// <summary>
@@ -37,6 +42,7 @@ namespace Arcadian.UI
         /// </summary>
         public void OnDeselect(BaseEventData eventData)
         {
+            IsFocused = false;
             OnButtonHoverEnd();
         }
 
