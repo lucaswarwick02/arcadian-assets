@@ -9,6 +9,11 @@ namespace Arcadian.UI
     {
         [SerializeField] private ScrollNavigation scrollNavigation;
 
+        private void Start()
+        {
+            OnTransformChildrenChanged();
+        }
+
         private void OnTransformChildrenChanged()
         {
             for (var i = 0; i < transform.childCount; i++)
