@@ -51,7 +51,7 @@ namespace Arcadian.UI.Transition
 
             SceneManager.LoadScene(sceneName);
 
-            yield return new WaitForSeconds(0.75f * speed);
+            yield return new WaitForSeconds(0.75f / speed);
             
             var showText = transitionEffectText.SetTexts(header, body);
 
@@ -59,7 +59,7 @@ namespace Arcadian.UI.Transition
             {
                 transitionEffectText.Open();
 
-                yield return new WaitForSeconds(2f * speed);
+                yield return new WaitForSeconds(2f / speed);
             }
 
             timer = 0f;
