@@ -16,7 +16,7 @@ namespace Arcadian.UI.Transition
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private TransitionEffectText transitionEffectText;
         
-        public static void ChangeScene(string sceneName, string header, string body)
+        public static void ChangeScene(string sceneName, string header, string body, float speed = 1f)
         {
             if (string.IsNullOrWhiteSpace(ArcadianAssets.Config.TransitionEffectPath))
             {
@@ -33,16 +33,16 @@ namespace Arcadian.UI.Transition
                     transitionEffect.canvasGroup.alpha = 0f;
                     transitionEffect.transitionEffectText.Close();
 
-                    transitionEffect.StartCoroutine(transitionEffect.Animation(sceneName, header, body));
+                    transitionEffect.StartCoroutine(transitionEffect.Animation(sceneName, header, body, speed));
                 };
         }
 
-        private IEnumerator Animation(string sceneName, string header, string body)
+        private IEnumerator Animation(string sceneName, string header, string body, float speed)
         {
             var timer = 0f;
             while (timer < FadeTime)
             {
-                timer += Time.deltaTime;
+                timer += Time.deltaTime * speed;
 
                 canvasGroup.alpha = Curves.In.Evaluate(timer / FadeTime);
                 
@@ -51,7 +51,7 @@ namespace Arcadian.UI.Transition
 
             SceneManager.LoadScene(sceneName);
 
-            yield return new WaitForSeconds(0.75f);
+            yield return new WaitForSeconds(0.75f * speed);
             
             var showText = transitionEffectText.SetTexts(header, body);
 
@@ -59,13 +59,13 @@ namespace Arcadian.UI.Transition
             {
                 transitionEffectText.Open();
 
-                yield return new WaitForSeconds(2f);
+                yield return new WaitForSeconds(2f * speed);
             }
 
             timer = 0f;
             while (timer < FadeTime)
             {
-                timer += Time.deltaTime;
+                timer += Time.deltaTime * speed;
 
                 canvasGroup.alpha = Curves.Out.Evaluate(timer / FadeTime);
                 
