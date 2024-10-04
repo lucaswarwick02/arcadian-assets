@@ -16,7 +16,7 @@ namespace Arcadian.UI.Transition
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private TransitionEffectText transitionEffectText;
         
-        public static void ChangeScene(string sceneName, string header, string body, float speed = 1f)
+        public static void ChangeScene(string sceneName, string header, string body, float speed = 1f, float textSpeed = 1f)
         {
             if (string.IsNullOrWhiteSpace(ArcadianAssets.Config.TransitionEffectPath))
             {
@@ -33,11 +33,11 @@ namespace Arcadian.UI.Transition
                     transitionEffect.canvasGroup.alpha = 0f;
                     transitionEffect.transitionEffectText.Close();
 
-                    transitionEffect.StartCoroutine(transitionEffect.Animation(sceneName, header, body, speed));
+                    transitionEffect.StartCoroutine(transitionEffect.Animation(sceneName, header, body, speed, textSpeed));
                 };
         }
 
-        private IEnumerator Animation(string sceneName, string header, string body, float speed)
+        private IEnumerator Animation(string sceneName, string header, string body, float speed, float textSpeed)
         {
             var timer = 0f;
             while (timer < FadeTime)
@@ -59,7 +59,7 @@ namespace Arcadian.UI.Transition
             {
                 transitionEffectText.Open();
 
-                yield return new WaitForSeconds(2f / speed);
+                yield return new WaitForSeconds(2f * textSpeed);
             }
 
             timer = 0f;
