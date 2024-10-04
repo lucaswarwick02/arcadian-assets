@@ -59,7 +59,7 @@ namespace Arcadian.UI.Transition
             {
                 transitionEffectText.Open();
 
-                yield return new WaitForSeconds(2f * textSpeed);
+                yield return new WaitForSeconds(2f / textSpeed);
             }
 
             timer = 0f;
