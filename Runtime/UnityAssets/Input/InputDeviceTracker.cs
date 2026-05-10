@@ -1,15 +1,20 @@
-using System.Collections.Generic;
-using System.Linq;
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Utilities;
 
 namespace LucasWarwick02.UnityAssets
 {
     /// <summary>
     /// Tracks the user's currently active input device (keyboard/mouse or gamepad)
-    /// based on the most recent input action that was triggered.
+    /// based on the most recent real button press.
+    ///
+    /// Uses InputSystem.onAnyButtonPress to avoid InputActionChange overhead
+    /// and analog noise.
+    ///
     /// Persists across scenes and auto-instantiates at application startup.
     /// </summary>
+    [RequireComponent(typeof(PlayerInput))]
     public sealed class InputDeviceTracker : MonoBehaviour
     {
         /// <summary>
@@ -34,12 +39,19 @@ namespace LucasWarwick02.UnityAssets
         /// <summary>
         /// Raised whenever the active input device type changes.
         /// </summary>
-        public static event System.Action<InputDeviceType> DeviceChanged;
+        public static event Action<InputDeviceType> DeviceChanged;
 
         private static InputDeviceTracker _instance;
+        private static PlayerInput _playerInput;
+
+        // Disposable returned by onAnyButtonPress.Subscribe(...)
+        private static IDisposable _anyButtonPressSubscription;
 
         private static bool HasInstance => _instance != null && _instance;
 
+        /// <summary>
+        /// Ensures the tracker exists before any scene loads.
+        /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
         {
@@ -64,81 +76,80 @@ namespace LucasWarwick02.UnityAssets
 
             _instance = this;
 
+            // Cached once — never queried from hot paths
+            _playerInput = FindObjectOfType<PlayerInput>();
+            _playerInput.actions = UnityAssetsSettings.GetOrCreate().inputActionsType;
+
             SetInitialDevice();
-            InputSystem.onActionChange += OnActionChange;
+
+            // Use CallOnce() instead of Subscribe() - it accepts a callback
+            _anyButtonPressSubscription =
+                InputSystem.onAnyButtonPress.CallOnce(OnAnyButtonPress);
         }
+
+        /// <summary>
+        /// Called once per real button press on any device.
+        /// Allocation-free and immune to analog noise.
+        /// </summary>
+        private static void OnAnyButtonPress(InputControl control)
+        {
+            var device = control.device;
+
+            if (device is Gamepad)
+            {
+                if (CurrentDevice != InputDeviceType.Gamepad)
+                    SetDevice(InputDeviceType.Gamepad);
+            }
+            else if (device is Keyboard || device is Mouse)
+            {
+                if (CurrentDevice != InputDeviceType.KeyboardMouse)
+                    SetDevice(InputDeviceType.KeyboardMouse);
+            }
+            
+            // Re-subscribe for the next button press
+            _anyButtonPressSubscription?.Dispose();
+            _anyButtonPressSubscription =
+                InputSystem.onAnyButtonPress.CallOnce(OnAnyButtonPress);
+}
 
         private void OnDestroy()
         {
             if (_instance == this)
                 _instance = null;
 
-            InputSystem.onActionChange -= OnActionChange;
+            _anyButtonPressSubscription?.Dispose();
+            _anyButtonPressSubscription = null;
         }
 
+        /// <summary>
+        /// Sets the initial device based on currently connected hardware.
+        /// </summary>
         private static void SetInitialDevice()
         {
             if (Gamepad.current != null)
-                SetDevice(InputDeviceType.Gamepad);
-            else if (Keyboard.current != null || Mouse.current != null)
-                SetDevice(InputDeviceType.KeyboardMouse);
-        }
-
-        private static void OnActionChange(object obj, InputActionChange change)
-        {
-            if (change != InputActionChange.ActionStarted)
-                return;
-
-            if (obj is not InputAction action || action.activeControl == null)
-                return;
-
-            var device = action.activeControl.device;
-            if (device is Gamepad)
-                SetDevice(InputDeviceType.Gamepad);
-            else if (device is Keyboard || device is Mouse)
-                SetDevice(InputDeviceType.KeyboardMouse);
-
-            var playerInput = FindObjectOfType<PlayerInput>();
-            if (playerInput != null)
-                CurrentScheme = playerInput.currentControlScheme;
-        }
-
-        private static string[] GetDeviceStrings(InputDeviceType inputDeviceType)
-        {
-            return inputDeviceType switch
             {
-                InputDeviceType.KeyboardMouse => new string[2] { "Mouse", "Keyboard" },
-                InputDeviceType.Gamepad => new string[1] { "Gamepad" },
-                _ => throw new System.NotImplementedException(),
-            };
-        }
-
-        private static string InferControlScheme()
-        {
-            var controlSchemes = UnityAssetsSettings.GetOrCreate().inputActionsType.controlSchemes;
-            if (controlSchemes.Count == 0)
-                return null;
-
-            var requiredDevices = new HashSet<string>(GetDeviceStrings(CurrentDevice));
-            
-            foreach(var controlScheme in controlSchemes)
-            {
-                if (controlScheme.deviceRequirements.All(req => requiredDevices.Any(device => req.controlPath.Contains(device))))
-                {
-                    return controlScheme.name;
-                }
+                SetDevice(InputDeviceType.Gamepad);
+                return;
             }
 
-            return null;
+            if (Keyboard.current != null || Mouse.current != null)
+            {
+                SetDevice(InputDeviceType.KeyboardMouse);
+            }
         }
 
+        /// <summary>
+        /// Updates the active device and control scheme.
+        /// Invokes DeviceChanged only on actual transitions.
+        /// </summary>
         private static void SetDevice(InputDeviceType device)
         {
-            if (CurrentDevice == device && CurrentScheme != null)
-                return;
-
             CurrentDevice = device;
-            CurrentScheme = InferControlScheme();
+
+            // PlayerInput is authoritative for scheme resolution
+            if (_playerInput != null)
+                CurrentScheme = _playerInput.currentControlScheme;
+
             DeviceChanged?.Invoke(device);
         }
     }
@@ -146,19 +157,23 @@ namespace LucasWarwick02.UnityAssets
     public static class InputActionExtensions
     {
         /// <summary>
-        /// Gets the display string for the current control scheme's binding.
+        /// Gets the display string for the binding associated with the
+        /// currently active control scheme.
         /// </summary>
-        /// <param name="inputAction">The input action to get the binding string for.</param>
-        /// <returns>A formatted string representing the binding, or an empty string if no matching binding is found.</returns>
         public static string GetBindingString(this InputAction inputAction)
         {
-            var display = inputAction.bindings.FirstOrDefault(b => b.groups.Equals(InputDeviceTracker.CurrentScheme)).ToDisplayString();
-            var mappings = new Dictionary<string, string>{};
+            var scheme = InputDeviceTracker.CurrentScheme;
+            if (string.IsNullOrEmpty(scheme))
+                return string.Empty;
 
-            if (mappings.TryGetValue(display, out var friendly))
-                return friendly;
+            var bindings = inputAction.bindings;
+            for (int i = 0; i < bindings.Count; i++)
+            {
+                if (bindings[i].groups == scheme)
+                    return bindings[i].ToDisplayString();
+            }
 
-            return display;
+            return string.Empty;
         }
     }
 }
