@@ -105,6 +105,18 @@ namespace LucasWarwick02.UnityAssets
         }
 
         /// <summary>
+        /// Move the camera instantly to a position, regardless of the target.
+        /// </summary>
+        /// <param name="position">The position to move the camera to.</param>
+        public static void MoveToPosition(Vector3 position)
+        {
+            if (_instance == null) return;
+
+            _instance.transform.position = position;
+            _instance._velocity = Vector3.zero;
+        }
+
+        /// <summary>
         /// Shake the camera.
         /// </summary>
         /// <param name="shakeStrength">Strength enumerator.</param>
