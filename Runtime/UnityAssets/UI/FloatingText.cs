@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace LucasWarwick02.UnityAssets
 {
@@ -21,6 +23,7 @@ namespace LucasWarwick02.UnityAssets
         /// <param name="animationDuration">Time to perform the fade in/out animations.</param>
         /// <param name="offset">Height to float to from the offset.</param>
         /// <param name="rotation">Maximum offset for rotation.</param>
+        /// <param name="sortingLayer">Sorting layer value for the SortingGroup component.</param>
         public static void Instantiate(
             string text,
             Vector3 position,
@@ -28,7 +31,9 @@ namespace LucasWarwick02.UnityAssets
             float duration = 0.5f,
             float animationDuration = 0.25f,
             float offset = 0.5f,
-            float rotation = 10f)
+            float rotation = 10f,
+            int sortingLayer = 10,
+            Action<TMP_Text> tmpSetup = null)
         {
             var obj = new GameObject();
             obj.transform.position = position;
@@ -43,9 +48,13 @@ namespace LucasWarwick02.UnityAssets
             fp.tmp.enableWordWrapping = false;
             fp.tmp.overflowMode = TextOverflowModes.Overflow;
             fp.tmp.alignment = TextAlignmentOptions.Center;
+            tmpSetup?.Invoke(fp.tmp);
 
             var rt = obj.transform as RectTransform;
             rt.sizeDelta = Vector2.zero;
+
+            var sortingGroup = obj.AddComponent<SortingGroup>();
+            sortingGroup.sortingOrder = sortingLayer;
 
             fp.StartCoroutine(fp.Animation(duration, animationDuration, offset));
         }
