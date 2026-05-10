@@ -342,5 +342,49 @@ namespace LucasWarwick02.UnityAssets
 
             return result;
         }
+
+        /// <summary>
+        /// Calculates the pixel width of a sprite within its texture rect, counting only pixels with alpha above the threshold.
+        /// </summary>
+        /// <param name="sprite">The sprite to measure.</param>
+        /// <param name="alphaThreshold">The alpha threshold (0-1). Pixels with alpha above this value are counted.</param>
+        /// <returns>The width in pixels of the sprite's visible content within its texture rect.</returns>
+        public static int GetPixelWidth(this Sprite sprite, float alphaThreshold = 0.5f)
+        {
+            if (sprite == null || sprite.texture == null)
+                return 0;
+
+            Texture2D texture = sprite.texture;
+            Rect rect = sprite.rect;
+            
+            int rectWidth = (int)rect.width;
+            int rectHeight = (int)rect.height;
+            int rectX = (int)rect.x;
+            int rectY = (int)rect.y;
+            int texWidth = texture.width;
+            
+            // Get all pixels at once - vastly more efficient than individual GetPixel calls
+            Color32[] pixels = texture.GetPixels32();
+            
+            byte threshold = (byte)(alphaThreshold * 255);
+            int width = 0;
+
+            // Check each column for opaque pixels
+            for (int x = 0; x < rectWidth; x++)
+            {
+                for (int y = 0; y < rectHeight; y++)
+                {
+                    // Calculate index in the 1D pixels array (row-major order)
+                    int pixelIndex = (rectY + y) * texWidth + (rectX + x);
+                    if (pixels[pixelIndex].a > threshold)
+                    {
+                        width++;
+                        break;
+                    }
+                }
+            }
+
+            return width;
+        }
     }
 }
