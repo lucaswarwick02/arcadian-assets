@@ -24,6 +24,12 @@ namespace LucasWarwick02.UnityAssets
         public float speed = 2;
         
         /// <summary>
+        /// How much randomness to add to generated paths (0-1).
+        /// </summary>
+        [Range(0f, 1f), Tooltip("How much randomness to add to generated paths."), BoxGroup("Settings")]
+        public float pathRandomness = 0.1f;
+        
+        /// <summary>
         /// Is the object currently moving?
         /// </summary>
         public bool IsMoving { private set; get; }
@@ -32,6 +38,9 @@ namespace LucasWarwick02.UnityAssets
         /// What is the current velocity of the object?
         /// </summary>
         public Vector2 Velocity { private set; get; }
+
+        private Queue<Node> pathQueue = new Queue<Node>();
+        private Coroutine moveCoroutine;
 
         /// <summary>
         /// What was the last velocity of the object?
@@ -44,37 +53,86 @@ namespace LucasWarwick02.UnityAssets
         /// <param name="path">Path of nodes to iterate over.</param>
         public void SetPath(IEnumerable<Node> path)
         {
-            StartCoroutine(Move(path));
+            // Check if path is null
+            if (path == null)
+            {
+                return;
+            }
+
+            // Clear current path and add new nodes
+            pathQueue.Clear();
+            foreach (var node in path)
+            {
+                pathQueue.Enqueue(node);
+            }
+
+            // Start movement if not already moving
+            if (moveCoroutine == null)
+            {
+                moveCoroutine = StartCoroutine(MoveAlongPath());
+            }
         }
         
-        private IEnumerator Move(IEnumerable<Node> path)
+        private IEnumerator MoveAlongPath()
         {
             IsMoving = true;
             
-            foreach (var node in path)
+            while (pathQueue.Count > 0)
             {
-                yield return MoveToNode(node);
+                var currentNode = pathQueue.Dequeue();
+                yield return MoveToNode(currentNode);
             }
 
             IsMoving = false;
             Velocity = Vector2.zero;
+            moveCoroutine = null;
             
             TargetReached?.Invoke();
         }
 
+        /// <summary>
+        /// Stop the current movement and clear the path.
+        /// </summary>
+        public void StopMovement()
+        {
+            if (moveCoroutine != null)
+            {
+                StopCoroutine(moveCoroutine);
+                moveCoroutine = null;
+            }
+            
+            pathQueue.Clear();
+            IsMoving = false;
+            Velocity = Vector2.zero;
+        }
+
         private IEnumerator MoveToNode(Node node)
         {
-            Velocity = (node.WorldPosition - transform.position).normalized;
-            LastVelocity = Velocity;
-
-            while (Vector3.Magnitude(transform.position - node.WorldPosition) > 0.0125f)
+            const float thresholdSqr = 0.0125f * 0.0125f; // Pre-calculate squared threshold
+            Vector3 targetPosition = node.WorldPosition;
+            
+            while (true)
             {
-                transform.position += new Vector3(Velocity.x, Velocity.y, 0) * (speed * Time.deltaTime);
+                Vector3 currentPosition = transform.position;
+                Vector3 requiredMovement = targetPosition - currentPosition;
+                
+                // Use sqrMagnitude instead of Magnitude to avoid sqrt calculation
+                if (requiredMovement.sqrMagnitude <= thresholdSqr)
+                    break;
+                
+                // Cache normalized direction and reuse for both velocity and movement
+                Vector3 direction = requiredMovement.normalized;
+                Velocity = direction;
+                LastVelocity = Velocity;
+
+                // Move using cached direction, avoid creating new Vector3
+                transform.position = currentPosition + direction * (speed * Time.deltaTime);
 
                 yield return null;
             }
 
-            transform.position = node.WorldPosition;
+            transform.position = targetPosition;
+            Velocity = Vector2.zero; // Stop at the node
         }
     }
 }
