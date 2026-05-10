@@ -72,5 +72,51 @@ namespace LucasWarwick02.UnityAssets
             // Finally invoke the completion action
             onComplete?.Invoke();
         }
+
+        public static IEnumerator Tween(
+            float duration,
+            Action onStart = null,
+            Action<float> onUpdate = null,
+            Action onComplete = null,
+            AnimationCurve curve = null,
+            bool useUnscaledTime = false)
+        {
+            // If not specified, use a linear increase
+            curve ??= AnimationCurve.Linear(0f, 0f, 1f, 1f);
+
+            // Start with a unique action
+            onStart?.Invoke();
+
+            var timer = 0f;
+            while (timer < duration)
+            {
+                // Update the timer
+                timer += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+
+                // Invoke the update function using the percentage duration, evaluated against the curve
+                onUpdate?.Invoke(curve.Evaluate(Mathf.Clamp01(timer / duration)));
+
+                yield return null;
+            }
+
+            // One final update with a full duration
+            onUpdate?.Invoke(curve.Evaluate(1f));
+
+            // Finally invoke the completion action
+            onComplete?.Invoke();
+        }
+
+        /// <summary>
+        /// Restarts a coroutine by stopping the existing one (if any) and starting a new one with the provided enumerator.
+        /// This allows for resuming or reinitializing coroutines without recreating the entire logic from scratch.
+        /// </summary>
+        /// <param name="monoBehaviour">MonoBehaviour script to manage the coroutine.</param>
+        /// <param name="coroutine">Reference to the existing coroutine that will be stopped if not null.</param>
+        /// <param name="enumerator">The IEnumerator instance representing the new coroutine to start.</param>
+        public static void RestartCoroutine(this MonoBehaviour monoBehaviour, ref Coroutine coroutine, IEnumerator enumerator)
+        {
+            if (coroutine != null) monoBehaviour.StopCoroutine(coroutine);
+            coroutine = monoBehaviour.StartCoroutine(enumerator);
+        } 
     }
 }
