@@ -21,9 +21,15 @@ namespace LucasWarwick02.UnityAssets
         [Tooltip("The max scale to increase the size by."), BoxGroup("Settings")]
         public float scale = 1.15f;
 
+        /// <summary>
+        /// Whether or not to use unscaled time.
+        /// </summary>
+        [Tooltip("Whether or not to use unscaled time."), BoxGroup("Settings")]
+        public bool useUnscaledTime = false;
+
         private void Update()
         {
-            var t = Curves.In.Evaluate(Mathf.PingPong(Time.time * speed, 1f));
+            var t = Curves.In.Evaluate(Mathf.PingPong((useUnscaledTime ? Time.unscaledTime : Time.time) * speed, 1f));
             transform.localScale = Vector3.Lerp(Vector3.one, Vector3.one * scale, t);
         }
 
