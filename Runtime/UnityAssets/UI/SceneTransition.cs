@@ -11,6 +11,9 @@ namespace LucasWarwick02.UnityAssets
     /// </summary>
     public class SceneTransition : MonoBehaviour
     {
+        public static event Action OnSceneTransitionEnd;
+        public static bool IsTransitioning { get; private set; }
+
         void Awake()
         {
             DontDestroyOnLoad(gameObject);
@@ -30,6 +33,8 @@ namespace LucasWarwick02.UnityAssets
 
         public IEnumerator Animation(Action changeScene, bool usePrefab)
         {
+            IsTransitioning = true;
+
             // Add a canvas it counts as a UI
             var canvas = gameObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -60,7 +65,9 @@ namespace LucasWarwick02.UnityAssets
             // Fade image out
             yield return this.Tween(duration: 0.5f, onUpdate: (t) => canvasGroup.alpha = Mathf.Lerp(1, 0, t), useUnscaledTime: true);
 
+            IsTransitioning = false;
             Destroy(gameObject);
+            OnSceneTransitionEnd?.Invoke();
         }
     }
 
