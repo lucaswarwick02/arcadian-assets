@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Utilities;
+using UnityEngine.InputSystem.LowLevel;
 
 namespace LucasWarwick02.UnityAssets
 {
@@ -14,143 +14,43 @@ namespace LucasWarwick02.UnityAssets
     ///
     /// Persists across scenes and auto-instantiates at application startup.
     /// </summary>
-    [RequireComponent(typeof(PlayerInput))]
     public sealed class InputDeviceTracker : MonoBehaviour
     {
-        /// <summary>
-        /// High-level classification of supported input device types.
-        /// </summary>
-        public enum InputDeviceType
+        public static bool IsUsingGamepad;
+
+        public static event Action DeviceChanged;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void Init()
         {
-            KeyboardMouse,
-            Gamepad,
+            InputSystem.onEvent += OnInputEvent;
+
+#if UNITY_EDITOR
+        UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += Cleanup;
+#endif
         }
 
-        /// <summary>
-        /// The most recently used input device type.
-        /// </summary>
-        public static InputDeviceType CurrentDevice { get; private set; }
-
-        /// <summary>
-        /// The currently active PlayerInput control scheme.
-        /// </summary>
-        public static string CurrentScheme { get; private set; }
-
-        /// <summary>
-        /// Raised whenever the active input device type changes.
-        /// </summary>
-        public static event Action<InputDeviceType> DeviceChanged;
-
-        private static InputDeviceTracker _instance;
-        private static PlayerInput _playerInput;
-
-        // Disposable returned by onAnyButtonPress.Subscribe(...)
-        private static IDisposable _anyButtonPressSubscription;
-
-        private static bool HasInstance => _instance != null && _instance;
-
-        /// <summary>
-        /// Ensures the tracker exists before any scene loads.
-        /// </summary>
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void Bootstrap()
+        private static void OnInputEvent(InputEventPtr eventPtr, InputDevice device)
         {
-            if (HasInstance)
-                return;
-
-            if (UnityAssetsSettings.GetOrCreate().inputActionsType == null)
-                return;
-
-            var go = new GameObject("[Lucas's Unity Assets] Input Device Tracker");
-            _instance = go.AddComponent<InputDeviceTracker>();
-            DontDestroyOnLoad(go);
-        }
-
-        private void Awake()
-        {
-            if (HasInstance && _instance != this)
+            if (!eventPtr.IsA<StateEvent>() && !eventPtr.IsA<DeltaStateEvent>())
             {
-                Destroy(gameObject);
                 return;
             }
 
-            _instance = this;
+            var newState = device is Gamepad;
 
-            // Cached once — never queried from hot paths
-            _playerInput = FindObjectOfType<PlayerInput>();
-            _playerInput.actions = UnityAssetsSettings.GetOrCreate().inputActionsType;
-
-            SetInitialDevice();
-
-            // Use CallOnce() instead of Subscribe() - it accepts a callback
-            _anyButtonPressSubscription =
-                InputSystem.onAnyButtonPress.CallOnce(OnAnyButtonPress);
-        }
-
-        /// <summary>
-        /// Called once per real button press on any device.
-        /// Allocation-free and immune to analog noise.
-        /// </summary>
-        private static void OnAnyButtonPress(InputControl control)
-        {
-            var device = control.device;
-
-            if (device is Gamepad)
+            if (newState == IsUsingGamepad)
             {
-                if (CurrentDevice != InputDeviceType.Gamepad)
-                    SetDevice(InputDeviceType.Gamepad);
-            }
-            else if (device is Keyboard || device is Mouse)
-            {
-                if (CurrentDevice != InputDeviceType.KeyboardMouse)
-                    SetDevice(InputDeviceType.KeyboardMouse);
-            }
-            
-            // Re-subscribe for the next button press
-            _anyButtonPressSubscription?.Dispose();
-            _anyButtonPressSubscription =
-                InputSystem.onAnyButtonPress.CallOnce(OnAnyButtonPress);
-}
-
-        private void OnDestroy()
-        {
-            if (_instance == this)
-                _instance = null;
-
-            _anyButtonPressSubscription?.Dispose();
-            _anyButtonPressSubscription = null;
-        }
-
-        /// <summary>
-        /// Sets the initial device based on currently connected hardware.
-        /// </summary>
-        private static void SetInitialDevice()
-        {
-            if (Gamepad.current != null)
-            {
-                SetDevice(InputDeviceType.Gamepad);
                 return;
             }
 
-            if (Keyboard.current != null || Mouse.current != null)
-            {
-                SetDevice(InputDeviceType.KeyboardMouse);
-            }
+            IsUsingGamepad = newState;
+            DeviceChanged?.Invoke();
         }
 
-        /// <summary>
-        /// Updates the active device and control scheme.
-        /// Invokes DeviceChanged only on actual transitions.
-        /// </summary>
-        private static void SetDevice(InputDeviceType device)
+        private static void Cleanup()
         {
-            CurrentDevice = device;
-
-            // PlayerInput is authoritative for scheme resolution
-            if (_playerInput != null)
-                CurrentScheme = _playerInput.currentControlScheme;
-
-            DeviceChanged?.Invoke(device);
+            InputSystem.onEvent -= OnInputEvent;
         }
     }
 
@@ -160,20 +60,44 @@ namespace LucasWarwick02.UnityAssets
         /// Gets the display string for the binding associated with the
         /// currently active control scheme.
         /// </summary>
-        public static string GetBindingString(this InputAction inputAction)
+        public static string GetBindingString(this InputAction action)
         {
-            var scheme = InputDeviceTracker.CurrentScheme;
-            if (string.IsNullOrEmpty(scheme))
-                return string.Empty;
-
-            var bindings = inputAction.bindings;
-            for (int i = 0; i < bindings.Count; i++)
+            for (int i = 0; i < action.bindings.Count; i++)
             {
-                if (bindings[i].groups == scheme)
-                    return bindings[i].ToDisplayString();
+                var binding = action.bindings[i];
+
+                if (binding.isComposite || binding.isPartOfComposite)
+                {
+                    continue;
+                }
+
+                if (!IsBindingCompatible(binding))
+                {
+                    continue;
+                }
+
+                return action.GetBindingDisplayString(i);
             }
 
             return string.Empty;
+        }
+
+        private static bool IsBindingCompatible(InputBinding binding)
+        {
+            if (string.IsNullOrEmpty(binding.effectivePath))
+            {
+                return false;
+            }
+
+            foreach (var device in InputSystem.devices)
+            {
+                if (InputControlPath.Matches(binding.effectivePath, device))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
