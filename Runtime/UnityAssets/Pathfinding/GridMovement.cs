@@ -126,7 +126,9 @@ namespace LucasWarwick02.UnityAssets
                 LastVelocity = Velocity;
 
                 // Move using cached direction, avoid creating new Vector3
-                transform.position = currentPosition + direction * (speed * Time.deltaTime);
+                // transform.position = currentPosition + direction * (speed * Time.deltaTime);
+                var step = Mathf.Min(speed * Time.deltaTime, requiredMovement.magnitude);
+                transform.position = currentPosition + (direction * step);
 
                 yield return null;
             }
