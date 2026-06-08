@@ -44,7 +44,7 @@ namespace LucasWarwick02.UnityAssets
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void OnAfterSceneLoad()
         {
-            Debug.Log($"[InputManager] Detected platform: {Platform}, starting scheme: {CurrentScheme}");
+            // Debug.Log($"[InputManager] Detected platform: {Platform}, starting scheme: {CurrentScheme}");
 
             InputSystem.onEvent += OnInputEvent;
 
